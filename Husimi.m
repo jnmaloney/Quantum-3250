@@ -7,7 +7,7 @@
 
 
 % Number of atoms to simulate
-N = 20;
+N = 9;
 
 
 
@@ -16,12 +16,12 @@ N_a1 = diag(N - (0:N));
 N_a2 = diag(0:N);
 %N_b = diag(0:N);
 
-a1_p = diag(sqrt(N + 1 - (1:N)), -1);
-a1_m = diag(sqrt(N + 1 - (1:N)), 1);
-a2_p = diag(sqrt(1:N), -1);
-a2_m = diag(sqrt(1:N), 1);
-b_p = diag(sqrt(1:N), -1);
-b_m = diag(sqrt(1:N), 1);
+%a1_p = diag(sqrt(N + 1 - (1:N)), -1);
+%a1_m = diag(sqrt(N + 1 - (1:N)), 1);
+%a2_p = diag(sqrt(1:N), -1);
+%a2_m = diag(sqrt(1:N), 1);
+%b_m = diag(sqrt(1:N), 1);
+%b_p = diag(sqrt(1:N), -1);
 
 f = @(x) (sqrt(x) .* sqrt(N - x + 1));
 J_m = diag(f(1:N), 1);
@@ -32,25 +32,39 @@ J_y = 0.5i * (J_p - J_m);
 J_z = 0.5 * (N_a1 - N_a2);
 
 
-    
+
+% Hamiltonain definition
+%H_0 = a1_m * a2_p * b_p;
+%H_AB = H_0 + ctranspose(H_0);
+%H_m = J_m * b_p + J_p * b_m;
+H_m = J_x;
+
+
+
+% Unitary operator
+U = @(t, H) (expm(-1i * H * t));
+
+
+
 % Initial state
 c0 = zeros(N + 1, 1);
 c0(1) = 1;
-
 psi0 = c0;
+t = 0.0;
+psi_t = U(t, H_m) * psi0;
 
 
 
-% State function
+% Spin-coherent state function (for Qfunc)
 alpha = @(theta, phi)  (...
-    expm(-1i * theta * J_y) * ...
     expm(-1i * phi * J_z) * ...
+    expm(-1i * theta * J_y) * ...
     psi0);
 
 
 
 % Density matrix
-rho_A = psi0 * psi0';
+rho_A = psi_t * ctranspose(psi_t);
 
 
 
@@ -59,19 +73,6 @@ Q = @(theta, phi) ( ...
         ctranspose(alpha(theta, phi)) * ...
         rho_A * ...
         alpha(theta, phi) );
-
-
-
-% Hamiltonain definition
-H_0 = a1_m * a2_p * b_p;
-H_AB = H_0 + ctranspose(H_0);
-
-H_m = J_m * b_p + J_p * b_m;
-
-
-
-% Unitary operator
-U = @(t, H) (expm(-1i * H * t));
 
 
 
