@@ -102,19 +102,23 @@ end
 var = @(A, psi) (ctranspose(psi) * A * psi);
 
 gt_steps = 100;
+F_A = zeros(gt_steps);
 F_AB = zeros(gt_steps);
 gt_space = linspace(0, 0.15, gt_steps);
 for i = 1:gt_steps
     gt = gt_space(i);
     psi = U(H_m, gt) * alpha(0, 0);
+    %F_A = 4 * var(G_A, psi);
+    F_A = 4 * var(H_m, psi);
     F_AB(i) = 4 * (var(J_y^2, psi) - var(J_y, psi)^2);
 end
 
 % Plot
 figure(1);
-semilogy([0, 0.15], [N, N], 'k--');
+semilogy([0, 0.15], [N, N], 'k:');
 hold on;
-semilogy([0, 0.15], [0.5*N^2, 0.5*N^2], 'k--');
+semilogy([0, 0.15], [0.5*N^2, 0.5*N^2], 'k:');
+semilogy(gt_space, F_A, 'b--');
 semilogy(gt_space, F_AB, 'r');
 axis([0, 0.15, 1e0, 1e4]);
 
