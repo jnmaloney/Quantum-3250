@@ -27,7 +27,7 @@ b0 = [1; 0];
 x0 = kron(a0, b0);
 
 % Create a series of evolved states
-gt_steps = 10;
+gt_steps = 50;
 t_space = linspace(0, 3.0, gt_steps);
 Na = zeros(gt_steps, 1);
 Nb = zeros(gt_steps, 1);
@@ -38,5 +38,7 @@ for i = 1:gt_steps
     Nb(i) = ctranspose(x) * N_b * x;
 end
 
-Na
-Nb
+figure(1);
+hold on;
+plot(t_space, Na, 'r');
+plot(t_space, Nb, 'b');
