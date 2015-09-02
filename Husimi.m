@@ -36,8 +36,7 @@ J_z = 0.5 * (N_a1 - N_a2);
 % Hamiltonain definition
 %H_0 = a1_m * a2_p * b_p;
 %H_AB = H_0 + ctranspose(H_0);
-%H_m = J_m * b_p + J_p * b_m;
-H_m = J_x;
+H_m = J_m .* b_p + J_p .* b_m;
 
 
 
