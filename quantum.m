@@ -158,3 +158,29 @@ xl = xlabel('J_y');
 yl = ylabel('P(J_y)');
 set([xl yl], 'interpreter', 'tex');
 
+     
+ 
+ % Plot the QFI
+ 
+ figure
+ t_steps = 100;
+ t_range = linspace(0, t, t_steps);
+ F_A = zeros(t_steps, 1);
+ F_AB = zeros(t_steps, 1);
+ 
+ for i = 1:t_steps
+ 
+ t = t_range(i);
+ psi_t = U(t, H_m) * psi0;
+ 
+ rho_AB = psi_t * psi_t';
+ rho_A = eye(N+1).*rho_AB;
+ 
+ F_AB(i) = 4 * var(J_y, rho_AB);
+ F_A(i) = 4 * var(J_y, rho_A);
+ 
+ end
+ 
+ semilogy(t_range, F_AB, 'r--');
+ hold on;
+ semilogy(t_range, F_A, 'b');
