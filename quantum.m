@@ -7,7 +7,17 @@
 
 
 % Number of atoms to simulate
-N = 100;
+N = 10;
+t = 0.04;
+M = 2;
+
+
+
+
+% Initial state
+c0 = zeros(N + 1, 1);
+c0(1) = 1;
+psi0 = c0;
 
 
 
@@ -16,16 +26,18 @@ N_a1 = diag(N - (0:N));
 N_a2 = diag(0:N);
 %N_b = diag(0:N);
 
-%a1_p = diag(sqrt(N + 1 - (1:N)), -1);
-%a1_m = diag(sqrt(N + 1 - (1:N)), 1);
-%a2_p = diag(sqrt(1:N), -1);
-%a2_m = diag(sqrt(1:N), 1);
-b_m = diag(sqrt(1:N), 1);
-b_p = diag(sqrt(1:N), -1);
+a1_p = diag(sqrt(N + 1 - (1:N)), -1);
+a1_m = diag(sqrt(N + 1 - (1:N)), 1);
+a2_p = diag(sqrt(1:N), -1);
+a2_m = diag(sqrt(1:N), 1);
+
+f = @(x) (sqrt(x + M));
+b_m = diag(f(1:N), 1);
+b_p = diag(f(1:N), -1);
 
 f = @(x) (sqrt(x) .* sqrt(N - x + 1));
-J_m = diag(f(1:N), 1);
-J_p = diag(f(1:N), -1);
+J_p = diag(f(1:N), 1);
+J_m = diag(f(1:N), -1);
 
 J_x = 0.5 * (J_p + J_m);
 J_y = 0.5i * (J_p - J_m);
@@ -34,25 +46,12 @@ J_z = 0.5 * (N_a1 - N_a2);
 
 
 % Hamiltonain definition
-%H_0 = a1_m * a2_p * b_p;
-%H_AB = H_0 + ctranspose(H_0);
-%H_m = J_m * b_p + J_p * b_m;
-%H_m = J_x;
+H_m = J_m .* b_p + J_p .* b_m;
 
-H_m = b_m + b_p;
 
 
 % Unitary operator
 U = @(t, H) (expm(-1i * H * t));
-
-
-
-% Initial state
-c0 = zeros(N + 1, 1);
-c0(1) = 1;
-psi0 = c0;
-t = 0.5;
-psi_t = U(t, H_m) * psi0;
 
 
 
@@ -64,14 +63,22 @@ alpha = @(theta, phi)  (...
 
 
 
+% Psi0 at time t
+psi_t = U(t, H_m) * psi0;
+
+
+
 % Density matrix
-rho_A = psi_t * ctranspose(psi_t);
+rho_AB = psi_t * psi_t';
+rho_A = eye(N+1).*rho_AB;
+meanJz = trace(J_z*rho_A);
+varJy = trace(J_y*J_y*rho_A) - trace(J_y*rho_A).^2;
 
-
+ 
 
 % Q function
 Q = @(theta, phi) ( ...
-        ctranspose(alpha(theta, phi)) * ...
+        alpha(theta, phi)' * ...
         rho_A * ...
         alpha(theta, phi) );
 
@@ -93,53 +100,61 @@ for i = 1:theta_steps
 end
 
 
-% Calculate F_AB
 
-%F_0 = 0.5 * N * (N + 2) - 2 * var(J_z^2);
-%F_1 = -var(1i * (J_p - J_m))^2;
-%F_2 = -var(J_p^2 + J_m^2);
+% Variance function
+var = @(A, psi) (psi' * A * psi);
 
-var = @(A, psi) (ctranspose(psi) * A * psi);
 
-gt_steps = 100;
-F_A = zeros(gt_steps);
-F_AB = zeros(gt_steps);
-gt_space = linspace(0, 0.15, gt_steps);
-for i = 1:gt_steps
-    gt = gt_space(i);
-    psi = U(H_m, gt) * alpha(0, 0);
-    %F_A = 4 * var(G_A, psi);
-    F_A = 4 * var(H_m, psi);
-    F_AB(i) = 4 * (var(J_y^2, psi) - var(J_y, psi)^2);
+
+% Bloch space
+theta_matrix = linspace(0, pi, theta_steps);
+phi_matrix = linspace(0, 2*pi, phi_steps);
+[thetamesh, phimesh] = meshgrid(theta_matrix, phi_matrix);
+
+
+
+% Calculate eigenvalues of J_y for P(J_y)
+[V, D] = eig(J_y);
+P_y = zeros(N + 1, 1);
+
+for i = 1:N + 1
+    % ith eigenvector
+    v = V(:,i);
+    
+    P_y(i) = v' * rho_A * v;
 end
 
-% Plot
-figure(1);
-semilogy([0, 0.15], [N, N], 'k:');
-hold on;
-semilogy([0, 0.15], [0.5*N^2, 0.5*N^2], 'k:');
-semilogy(gt_space, F_A, 'b--');
-semilogy(gt_space, F_AB, 'r');
-axis([0, 0.15, 1e0, 1e4]);
 
-% radius = N / 2;
-% theta_matrix = linspace(0, pi, theta_steps);
-% phi_matrix = linspace(0, 2*pi, phi_steps);
-% [thetamesh, phimesh] = meshgrid(theta_matrix, phi_matrix);
-% x = radius * sin(thetamesh) .* cos(phimesh);
-% y = radius * sin(thetamesh) .* sin(phimesh);
-% z = radius * cos(thetamesh);
-% 
-% 
-% figure(17)
-% surf(x, y, z, q')
-% shading 'interp'
-% view(3)
-% %view([1, 0, 0])
-% %caxis([0, 2])
-% axis on
-% axis tight
-% axis equal
-% %axis([-51, 51, -51, 51, -51, 51])
-% grid off;
+
+
+figure
+colormap(spring);
+%title(sprintf('Husimi-Q function and J_y projection for N=%l atoms, M=%i photons and gt=%i', N, M, t));
+
+
+
+subplot(2, 1, 1)
+
+
+radius = N / 2;
+x = radius * sin(thetamesh) .* cos(phimesh);
+y = radius * sin(thetamesh) .* sin(phimesh);
+z = radius * cos(thetamesh);
+
+surf(x, y, z, q')
+shading 'interp'
+view(3)
+axis on
+axis tight
+axis equal
+grid off;
+     
+     
+
+subplot(2, 1, 2)
+    
+bar(-N/2:N/2, P_y, 'k');
+xl = xlabel('J_y');
+yl = ylabel('P(J_y)');
+set([xl yl], 'interpreter', 'tex');
 
