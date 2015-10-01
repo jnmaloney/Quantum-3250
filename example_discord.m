@@ -5,6 +5,10 @@ function example_discord()
 %
 %
 
+% ref: PhysRevLett.88.017901.pdf
+% Quantum Discord: A Measure of the Quantumness of Correlations
+
+
     N = 2;
     quantum_base;
 
