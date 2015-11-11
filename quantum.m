@@ -11,11 +11,11 @@ quantum_base;
 
 
 % Number of atoms to simulate
-N = 1;
+N = 1e2 + 1;
 M = 0;
 
 % Evolution Time
-t = 0.15;
+t = 0.40;
 
 
 
@@ -65,7 +65,71 @@ meanJz = trace(J_z*rho_A);
 varJy = trace(J_y*J_y*rho_A) - trace(J_y*rho_A).^2;
 
 
-% ...
-qfi(N, M, t, H_m, J_x, J_y, J_z, psi0, rho_A);
+
+% Calculate the QFI of the state after evolution
+H = H_m;
+
+% figure
+% hold on;
+% 
+t_steps = 100;
+t_range = linspace(0, t, t_steps);
+F_A = zeros(t_steps, 1);
+F_AB = zeros(t_steps, 1);
+D = zeros(t_steps, 1);
+
+for i = 1:t_steps
+
+    t = t_range(i);
+    psi_t = U(t, H) * psi0;
+
+    rho_AB = psi_t * psi_t';
+    rho_A = eye(N+1).*rho_AB;
+
+    F_AB(i) = 4 * var_d(J_y, rho_AB);
+    F_A(i) = 4 * var_d(J_y, rho_A);
+
+    % Calculate the discord of the state if possible
+    D(i) = qd(N, J_x, J_y, rho_AB, rho_A);
+
+end
+
+%title(sprintf('t = %f', t));
+
+%semilogy(t_range, F_AB / N, 'r--');
+%semilogy(t_range, F_A / N, 'k');
+%semilogy(t_range, D, 'b');
+
+% QD v QFI
+figure
+hold on
+title(sprintf('t = %f', t));
+
+% Create inset discord / bloch
+%axes('Parent', hf1, 'Position',[0.20 0.65 0.25 0.25]);
+%box on
+subplot(1, 3, 3);
+colormap(spring)
+
+bloch_inset(N, M, t, H, J_x, J_y, J_z, psi0, rho_A);
+
+subplot(1, 3, 2);
+hold on;
+
+semilogy(t_range, F_AB / N, 'r--');
+semilogy(t_range, F_A / N, 'k');
+semilogy(t_range, D, 'b');
+
+subplot(1, 3, 1);
+    axis on
+    axis tight
+    %axis equal
+    grid off;
+    xlabel('F_AB')
+    zlabel('D')
+    set(gca, 'XTickLabel', '');
+    set(gca, 'YTickLabel', '');
+    set(gca, 'ZTickLabel', '');
+plot(F_AB / N, D);
 
 

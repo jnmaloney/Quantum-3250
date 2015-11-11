@@ -30,10 +30,11 @@ Q = @(theta, phi) ( ...
 % von Neumann entropy
 vn_entropy = @(rho) -trace(rho * logm(rho));
 
+% ith element of b
+el = @(b, i) b(i);
 
 % basis projector
 %projector = @(i) sparse(i, i, 1, N + 1, N + 1); 
-el = @(b, i) b(i);
 b0 = @(theta) [cos(theta), sin(theta) * exp(1i)];
 b1 = @(theta) [sin(theta) * exp(1i), cos(theta)];
 b = @(i, theta) [el(b0(theta), i); el(b1(theta), i)];
